@@ -1,0 +1,32 @@
+name: arreh
+description: It it a graduation work.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  json_annotation: ^4.5.0
+  json_serializable: ^6.2.0
+  http: ^0.13.4
+  flutter_webrtc: ^0.6.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+  build_runner: ^2.1.11
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+    - assets/part/
