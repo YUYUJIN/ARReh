@@ -36,7 +36,26 @@ Flutter로 제작된 웹 앱 형태의 재활치료 가이드이다. AR 요소�
  Mediapipe를 이용하여 추정한 Landmark들을 각각 벡터로 하여 사이각, 거리를 측정할 수 있다. 동작 판단의 기준이 되는 특징을 운동별로 산정하여 운동별 동작의 실행 유무를 판별할 수 있다.
 
 ## 3D model rendering using Natural feature tracking marker
- 
+  Mediapipe의 결과로 추정한 Landmark들이 정확하고 실시간으로 나온다는 것을 전제로 Natural feature tracking 마커로서 사용한다. Blender로 제작한 3D 모델들의 vertices의 x,y,z 좌표계를 영상의 픽셀 좌표로 변환하기 위해서는 최초의 마커들의 외곡, 기울기들을 이용하여 반영해야한다. 이 때, 사용자의 자세 또한 마커들 사이에 상대거리, 상대 각도를 이용하여 특징을 구하여 자세를 측정한다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/Markers.png></img>  
+  DP(방향 기준 좌표)(붉은 점)와 실제 3D 모델을 그릴 공간을 포함할 마커(초록선)를 추측한다. DP는 하나의 3D 공간을 추측할 때 하나만 사용하는데, 3D 모델을 그릴 때 방향을 DP로 설정한다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/zEstimation.png></img>  
+  근사시킬 Z축 벡터를 구하기 위해 마커 P1에서 P2까지의 거리는 왜곡 되지 않았다고 가정하고 3차원 공간을 정육면체로 근사시킬 것이다. 이 때, 정육면체의 한 변의 길이를 a라고 한다면 마커 P1에서 P2까지의 거리는 이다. 왜곡되어 나타나는 Z축의 길이를 구하기 위해서 왜곡된 정도를 구해야한다. 이 때 왜곡된 정도는 DP와 마커 P1, P2의 사이 각으로 가정한다. 왜곡이 일어지 않을 때는 Z축은 0이 되어야하고 왜곡이 최대일 때는 Z축이 가 되어야한다. Z축의 길이는 양수이기 때문에 로 근사한다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/equation1.PNG></img>  
+  Z축은 벡터 P1->P2에 직교한다고 가정하고, 크기는 위에 구한 크기라고 가정하여 근사한다면 연립방정식[식 1]을 세울 수 있고, 연립 방적식의 근으로 Z축 벡터를 두 개 구할 수 있다. 이때 DP와 가까운 벡터를 구하여 근사시킨 Z축 벡터를 구한다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/xyEstimation.png></img>  
+ Z축 근사에서 사용한 가정은 그대로 사용한다. 이후 왜곡이 없는 경우, X축, Y축에 길이는 가 되어야하고, 왜곡이 최대는 경우에는 가 되어야한다.  따라서 X축, Y축의 길이는 이다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/equation2.PNG></img>  
+ X축의 끝 좌표와 Y축의 끝 좌표를 지나가는 직선은 마커 P1과 P2의 중점을 지나가고 Z축과 평행하다고 가정한다. 직선의 방정식과 마커 P1과의 거리가 축의 길이가 되는 두 점의 방정식으로 연립방정식을 세워 X축과 Y축을 구한다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/2d3d.png></img>  
+ 3D 모델이 존재하는 3차원 좌표계를 영상의 2차원 좌표계로 투영하기 위해 3차원 좌표계를 상대크기(0~1)로 고정시킨다. 위에서 구한 X축, Y축, Z축 벡터를 각각 라고 한다. 이를 이용하여 2차원 좌표계의 성분을 3차원 좌표계의 성분으로 분해하면 으로 근사할 수 있다. 이를 이용해 3D 모델의 3차원인 vertex들을 2차원으로 근사시킨다.  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/3Dresult.png></img>  
+ 최종적으로 OpenCV를 이용하여 face들의 vertices를 메쉬(mesh)로 영상에 그린다. texture 또한 이 과정에서 추가한다.
+
+## Audio Guide
+ 영상에 제공되는 영상 가이드로는 설명하기 힘든 부분이 존재한다. 이를 보완하기 위해 Mediapipe를 이용하여 추정한 운동 자세마다 적절한 음성 가이드를 사용자에게 제공한다. 운동 자세마다 필요한 음성을 .wav파일로 서버에 준비한 상태로 WebRTC에서 audio track을 이용하여 사용자에게 받은 Audio Frame 단위로 수신한 데이터를 전송한다.
+
+
 
 
 ## Getting Started
