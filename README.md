@@ -55,8 +55,97 @@ Flutter로 제작된 웹 앱 형태의 재활치료 가이드이다. AR 요소�
 ## Audio Guide
  영상에 제공되는 영상 가이드로는 설명하기 힘든 부분이 존재한다. 이를 보완하기 위해 Mediapipe를 이용하여 추정한 운동 자세마다 적절한 음성 가이드를 사용자에게 제공한다. 운동 자세마다 필요한 음성을 .wav파일로 서버에 준비한 상태로 WebRTC에서 audio track을 이용하여 사용자에게 받은 Audio Frame 단위로 수신한 데이터를 전송한다.
 
+## Trouble Shooting
+<details>
+<summary>WebRTC</summary>
 
+<details>
+<summary>개요</summary>
 
+초기 Flutter와 Python의 데이터 상호 전달을 위해 http get/post 통신 및 Flask를 이용하였다. Flutter에서 데이터를 요청하면 Python에서 웹캠 자원을 사용한 후, 웹캠의 영상에 대해 프레임 단위로 AR 처리를 하여 Flask와 Flutter 간 http 통신을 하였다. 이 때, 이미지 통신에 제한되는 부분이 있어 이미지를 base64 String 코드로 인코딩하여 플러터에서 보낸 후, 이를 Flutter에서 디코딩 하는 방식을 사용했었다. 이런 방식으로 진행했을 때, Python에서의 영상 처리 속도에 제한이 있어 초당 5프레임 정도밖에 가져오지 못했다. 따라서 해당 문제점을 피하기 위해 실시간 통신이 가능하며 Latency가 짧은 통신 방식을 이용해야 된다고 판단하였다.
+</details>
+<details>
+<summary>적용</summary>
+
+WebRTC는 앱, 웹에 적합하며 Latency도 짧고, Dart 및 Python에서도 http 통신을 위한 설계가 가능하여 많은 연산량을 가지는 코드를 짜더라도 안정적으로 프레임 단위별 전송이 가능했다. 또한 비디오 프레임에 대한 전송이 원활하여 오디오 프레임에 대한 처리도 가능해졌으며 비디오, 오디오 모두 실시간으로 처리하여 끊김없이 전송하기 때문에 위의 문제를 해결할 수 있었다.
+</details>
+</details>
+
+<details>
+<summary>StreamBuiler</summary>
+
+<details>
+<summary>개요</summary>
+
+사용자가 초기 화면에서 운동을 선택한 후, 다음 운동 화면으로 넘겨주는 데이터는 사용자가 선택한 운동 리스트였다. 운동을 진행하는 화면에서 남은 시간과 사용자가 운동하는 모습을 출력해준 뒤, 남은 시간이 0이 되고 나면 다음 운동 화면으로 넘겨줘야 하는데, 위젯 내에서의 dart 언어 사용은 위젯의 State를 설정하는 setState() 외에서는 대부분 사용하지 못하는 경우가 많아 리스트가 아닌 단일 값으로만 화면을 출력하게 되어 조건문과 반복문도 사용하지 못해 화면 변경에 제한이 있었다. 따라서 일정 충족 값을 만족할 때, 스크린은 그대로이고 위젯들만 변경되는 Builder를 찾아 레이아웃을 다시 설계해야 위젯 전환이 부드럽다.
+</details>
+<details>
+<summary>적용</summary>
+
+운동 화면인 reh.dart 파일과 비디오를 송출하는 WebRTC 기반 p2pVideo.dart를 하나로 합쳤다. 변수들을 public으로 설정하는 방법들도 있었으나, 그렇게되면 p2pVideo.dart에 있는 메소드들을 원활하게 사용하기가 어렵게 되어 합치게 되었다. 하나로 합친 dart 파일의 내부에서 운동 순서, 이름, 남은 시간에 대한 정보들을 스스로 일정 충족 값에 해당되면 자동으로 State를 바꿔주는 StreamBuilder를 이용해 설계하였다. 그 후, 비디오 화면에 해당되는 부분은 기존 p2pVideo.dart의 카메라 송출을 요청하는 _makeCall 메소드, 송출 정지를 요청하는 _stopCall 메소드, 이 두 가지를 하나로 합쳐 stop 후 자동으로 다시 make를 하는 _nextCall을 만들었다. StreamBuilder로 바뀐 운동의 남은 시간이 0초가 되면 _nextCall을 호출하는 방식으로 비디오, 오디오를 모두 새로운 값으로 받아와 문제를 해결할 수 있었다.
+</details>
+</details>
+
+<details>
+<summary>Mediapipe 모델 사용 조정</summary>
+
+<details>
+<summary>개요</summary>
+
+Mediapipe를 이용해 Natural feature tracking 마커를 생성할 때 Lite 모델을 사용하여도 WebRTC를 이용하여 영상 정보를 주고받을 때 딜레이가 생겼다. 또한 마커가 정확하게 생성되어 tracking이 되지 않아도 가이드가 시작되는 경우가 존재하였다.
+</details>
+<details>
+<summary>적용</summary>
+
+Mediapipe 모델을 불러오는 과정을 매 영상마다가 아닌 클라이언트에서 서버로 WebRTC request에서 track를 생성하는 과정에서 한번 불러오고 동일한 모델을 사용하도록 조정하였다. 또한 Lite 모델의 복잡도를 1에서 0으로 낮췄다. 모델의 복잡도가 낮아지면서 정확도에 문제가 발생하였지만, 테스트 환경에서는 자세추정과 3D 모델 렌더링을 위한 마커 생성에서는 큰 제약이 되지 않았다. 
+ 마커가 정확하지 않고, 너무 적은 양의 마커만 생성되어 정확성이 의심되는 경우에는 가이드에서 영상을 수정하지 못하도록 제한하였다.
+</details>
+</details>
+
+<details>
+<summary>Audio track 동기화</summary>
+
+<details>
+<summary>개요</summary>
+
+WebRTC에서 Audio를 발생시킬 때 영상처리로 분류된 자세별로 음성이 다르게 생성되어 전송되지 않는 경우가 발생하였다. 또한 음성을 준비하여도 음성의 크기, 발음, 빠르기가 손상되어 전송되어 제대로 된 음성 가이드가 나오지 않는 경우가 발생하였다.
+</details>
+<details>
+<summary>적용</summary>
+
+ Audio track 생성 시 Audio Frame으로 보내주는 객체를 생성하여 등록하였고, Audio 선정 시 Flag를 사용하여 상호배제를 구현하였다. 사전에 준비한 .wav 파일의 음성이 22050Hz, channel이 1로 샘플링 된 것을 확인하고, 구현된 WebRTC에서 클라이언트에서 서버로 보내는 Audio Frame이 48000Hz, channel이 2인 것을 확인하였다. 기존의 음원 파일들에서 Audio Frame을 추출하였을 때, 48000Hz, channel이 2인 Audio Frame이 추출되도록 Upsampling, Resampling 과정을 거쳐 준비하였다.
+</details>
+</details>
+
+<details>
+<summary>수학 모델의 근사 오류 수정</summary>
+
+<details>
+<summary>개요</summary>
+
+위에 근사 모델을 사용하여 영상에서 3D 모델을 렌더링할 3차원 공간을 생성할 때 연립방정식이 허근을 가지거나(실제 픽셀 값이 나오기에 허근을 가질 수 없다), 수학적인 도메인 에러가 발생하는 경우가 있었다.
+</details>
+<details>
+<summary>적용</summary>
+
+ 수학 모델을 간소화하고 Python 라이브러리인 sympy를 이용하여 검산을 실시하였다. 이후에 마커들의 기울기, 왜곡 등이 정상적으로 존재하는 수 있는 경우를 계산하였고, 이외에는 강제로 왜곡 정도를 고정하였다.
+</details>
+</details>
+
+## Examples
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/example1.png></img>  
+ 실제 프로그램 가동 사진  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/example2.png></img>  
+메인화면  
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/example3.png></img>
+프로그램 동작 화면
+
+## Reference
+MediaPipe Pose : https://google.github.io/mediapipe/solutions/pose.html
+AR application using python and OpenCV: 
+https://github.com/jayantjain100/Augmented-Reality/blob/master/object_module.py  
+flutter-webrtc_python-aiortc-opencv : 
+https://flutterawesome.com/flutter-webrtc-demo-with-python-server-to-perform-image-processing-on-video-frames-using-opencv/
 
 ## Getting Started
 
@@ -70,3 +159,5 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+
