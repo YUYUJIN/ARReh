@@ -137,7 +137,7 @@ WebRTC에서 Audio를 발생시킬 때 영상처리로 분류된 자세별로 �
  실제 프로그램 가동 사진  
 <img src=https://github.com/YUYUJIN/ARReh/blob/main/images/example2.png></img>  
 메인화면  
-<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/example3.png></img>
+<img src=https://github.com/YUYUJIN/ARReh/blob/main/images/example3.png></img>  
 프로그램 동작 화면
 
 ## Reference
