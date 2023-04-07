@@ -141,7 +141,7 @@ WebRTC에서 Audio를 발생시킬 때 영상처리로 분류된 자세별로 �
 프로그램 동작 화면
 
 ## Reference
-MediaPipe Pose : https://google.github.io/mediapipe/solutions/pose.html
+MediaPipe Pose : https://google.github.io/mediapipe/solutions/pose.html  
 AR application using python and OpenCV: 
 https://github.com/jayantjain100/Augmented-Reality/blob/master/object_module.py  
 flutter-webrtc_python-aiortc-opencv : 
