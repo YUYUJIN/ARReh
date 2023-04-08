@@ -48,11 +48,13 @@ Flutter로 제작된 웹 앱 형태의 재활치료 가이드이다. AR 요소�
 <img src=https://github.com/YUYUJIN/ARReh/blob/main/images/equation2.PNG></img>  
  X축의 끝 좌표와 Y축의 끝 좌표를 지나가는 직선은 마커 P1과 P2의 중점을 지나가고 Z축과 평행하다고 가정한다. 직선의 방정식과 마커 P1과의 거리가 축의 길이가 되는 두 점의 방정식으로 연립방정식을 세워 X축과 Y축을 구한다.  
    
- 3D 모델이 존재하는 3차원 좌표계를 영상의 2차원 좌표계로 투영하기 위해 3차원 좌표계를 상대크기(0~1)로 고정시킨다. 위에서 구한 X축, Y축, Z축 벡터를 각각 라고 한다. 이를 이용하여 2차원 좌표계의 성분을 3차원 좌표계의 성분으로 분해하면 으로 근사할 수 있다. 
+ 3D 모델이 존재하는 3차원 좌표계를 영상의 2차원 좌표계로 투영하기 위해 3차원 좌표계를 상대크기(0~1)로 고정시킨다. 위에서 구한 X축, Y축, Z축 벡터를 각각 라고 한다. 이를 이용하여 2차원 좌표계의 성분을 3차원 좌표계의 성분으로 분해하면 으로 근사할 수 있다.  
 <img src=https://github.com/YUYUJIN/ARReh/blob/main/images/2d3d.png></img>  
 
  이를 이용하여 2차원 좌표계의 성분을 3차원 좌표계의 성분으로 분해하면 근사할 수 있다. 이를 이용해 3D 모델의 3차원인 vertex들을 2차원으로 근사시킨다. 
+   
  <img src=https://github.com/YUYUJIN/ARReh/blob/main/images/equation3.PNG></img>  
+   
  이후에 OpenCV를 이용하여 face들의 vertices를 메쉬(mesh)로 영상에 그린다. texture 또한 이 과정에서 추가한다.  
 <img src=https://github.com/YUYUJIN/ARReh/blob/main/images/3Dresult.png></img>  
  최종적으로 OpenCV를 이용하여 face들의 vertices를 메쉬(mesh)로 영상에 그린다. texture 또한 이 과정에서 추가한다.
